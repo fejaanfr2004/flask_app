@@ -1,0 +1,46 @@
+name: flask-app-ci
+on: 
+  push:
+    branches:
+      - main
+env:
+  IMAGE_NAME: flask-app
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+  steps:
+    - name: checkout source
+      uses: actions/checkout@v4
+    - name: setup python
+      uses: actions/setup-python@v7.0.0
+      with:
+        python-version:"3.12"
+    - name: Install dependencies
+      run: 
+         pip install -r requirements.txt
+    - name: docker login
+      uses: docker/login-action@v4.6.0
+      with:
+        username: ${{ secrets.Docker_USERNAME }}
+        password: ${{ secrets.Docker_PASSWORD }}
+    - name: Build Docker Image
+      uses: docker build -t ${{ secrets.Docker_USERNAME}} /flask-app:latest 
+    - name: Push Image
+      run: docker push ${{ secrets.Docker_USERNAME }}/flask-app 
+    - name: Deploy to azure
+      uses: appleboy/ssh-action@v1.0.3
+      with: 
+        host: ${{ secrets.azure_HOST }}
+        username: ${{ secrets.azure_USER }}
+        key: ${{ secrets.azure_SSH_KEY  }} 
+        script: | 
+            docker pull ${{ secrets.Docker_USERNAME }}/flask-app:latest
+            docker stop flask-app || true
+            docker rm flask-app || true
+            docker run -d -p 80:80 --name flask-cont \
+            -- restart unless-stopped \   
+            ${{ secrets.Docker_USERNAME }} /flask-app:latest
+            docker prune -f
+      
+          
+          
