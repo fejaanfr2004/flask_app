@@ -34,7 +34,10 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.Docker_USERNAME }}/flask-app:latest .
+          docker buildx build \
+             --platform linux/arm64 \
+             -t ${{ secrets.Docker_USERNAME }}/flask-app:latest \
+             --push .
 
       - name: Push Docker Image
         run: |
