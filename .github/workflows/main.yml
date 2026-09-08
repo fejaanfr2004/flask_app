@@ -53,7 +53,7 @@ jobs:
             docker rm flask-app || true
 
             docker run -d \
-              -p 80:5000 \
+              -p 80:80 \
               --name flask-app \
               --restart unless-stopped \
               ${{ secrets.Docker_USERNAME }}/flask-app:latest
